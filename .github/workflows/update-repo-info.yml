@@ -1,6 +1,7 @@
 name: Update Repository Info
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
 
@@ -9,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      repository-metadata: write
 
     steps:
     - name: Update repository description and homepage
@@ -20,7 +20,7 @@ jobs:
           await github.rest.repos.update({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            description: "🏥 CareBridge - Healthcare Platform for emergency services, animal welfare, and community support",
+            description: "🏥 CareBridge - Healthcare Platform | 🌐 Live: https://poojasharma1801.github.io/CareBridege",
             homepage: "https://poojasharma1801.github.io/CareBridege",
             has_issues: true,
             has_projects: true,
