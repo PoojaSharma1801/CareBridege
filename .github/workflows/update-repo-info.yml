@@ -1,0 +1,28 @@
+name: Update Repository Info
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      repository-metadata: write
+
+    steps:
+    - name: Update repository description and homepage
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          await github.rest.repos.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            description: "🏥 CareBridge - Healthcare Platform for emergency services, animal welfare, and community support",
+            homepage: "https://poojasharma1801.github.io/CareBridege",
+            has_issues: true,
+            has_projects: true,
+            has_wiki: false
+          });
