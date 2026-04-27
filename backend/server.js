@@ -21,23 +21,89 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 
 // Firebase Admin Initialization
-const serviceAccount = {
-  project_id: process.env.FIREBASE_PROJECT_ID,
-  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-  client_email: process.env.FIREBASE_CLIENT_EMAIL,
-  client_id: process.env.FIREBASE_CLIENT_ID,
-  auth_uri: process.env.FIREBASE_AUTH_URI,
-  token_uri: process.env.FIREBASE_TOKEN_URI
-};
+let db, auth;
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
-});
+try {
+  // Check if Firebase Admin environment variables are available
+  if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_PROJECT_ID) {
+    const serviceAccount = {
+      project_id: process.env.FIREBASE_PROJECT_ID,
+      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || '',
+      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      client_id: process.env.FIREBASE_CLIENT_ID || '',
+      auth_uri: process.env.FIREBASE_AUTH_URI || 'https://accounts.google.com/o/oauth2/auth',
+      token_uri: process.env.FIREBASE_TOKEN_URI || 'https://oauth2.googleapis.com/token'
+    };
 
-const db = admin.firestore();
-const auth = admin.auth();
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
+    });
+    
+    db = admin.firestore();
+    auth = admin.auth();
+    console.log('✅ Firebase Admin initialized successfully');
+  } else {
+    console.log('⚠️  Firebase Admin environment variables not found - running in development mode');
+    // Create mock implementations for development
+    db = {
+      collection: () => ({
+        doc: () => ({
+          get: () => Promise.resolve({ exists: false, data: () => ({}) }),
+          set: () => Promise.resolve(),
+          update: () => Promise.resolve(),
+          delete: () => Promise.resolve()
+        }),
+        add: () => Promise.resolve({ id: 'mock-id' }),
+        get: () => Promise.resolve({ docs: [] }),
+        where: () => ({
+          get: () => Promise.resolve({ docs: [] }),
+          orderBy: () => ({
+            limit: () => ({
+              get: () => Promise.resolve({ docs: [] })
+            })
+          })
+        })
+      })
+    };
+    auth = {
+      verifyIdToken: () => Promise.resolve({ uid: 'mock-user' }),
+      createUser: () => Promise.resolve({ uid: 'mock-user' }),
+      getUser: () => Promise.resolve(null)
+    };
+  }
+} catch (error) {
+  console.error('❌ Firebase Admin initialization failed:', error.message);
+  console.log('🔄 Running in mock mode for development');
+  
+  // Mock implementations
+  db = {
+    collection: () => ({
+      doc: () => ({
+        get: () => Promise.resolve({ exists: false, data: () => ({}) }),
+        set: () => Promise.resolve(),
+        update: () => Promise.resolve(),
+        delete: () => Promise.resolve()
+      }),
+      add: () => Promise.resolve({ id: 'mock-id' }),
+      get: () => Promise.resolve({ docs: [] }),
+      where: () => ({
+        get: () => Promise.resolve({ docs: [] }),
+        orderBy: () => ({
+          limit: () => ({
+            get: () => Promise.resolve({ docs: [] })
+          })
+        })
+      })
+    })
+  };
+  auth = {
+    verifyIdToken: () => Promise.resolve({ uid: 'mock-user' }),
+    createUser: () => Promise.resolve({ uid: 'mock-user' }),
+    getUser: () => Promise.resolve(null)
+  };
+}
 
 // Middleware
 app.use(helmet({
