@@ -2,6 +2,12 @@
 
 A comprehensive platform for connecting people with care services, animal welfare, and emergency support.
 
+## 🌐 Live Demo
+
+**Live Site:** https://poojasharma1801.github.io/CareBridege
+
+*The site automatically updates whenever you push changes to the main branch!*
+
 ## 🔐 Security Setup - IMPORTANT
 
 This project uses environment variables to secure sensitive configuration data like API keys.
