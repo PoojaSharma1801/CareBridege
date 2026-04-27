@@ -3,17 +3,10 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, addDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import config from './config';
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyAcLbekbhi7rgJIxw0qYr_yg3cyOiDcbKI",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "carebridge-7974d.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "carebridge-7974d",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "carebridge-7974d.firebasestorage.app",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "493353782115",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:493353782115:web:10927eb63c777a5e2be156",
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-G7B37TFF08"
-};
+// Use configuration based on environment
+const firebaseConfig = config.firebaseConfig;
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: carebridge-backend
+    env: node
+    repo: https://github.com/PoojaSharma1801/CareBridege.git
+    rootDir: backend
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    autoDeploy: true
