@@ -6,13 +6,13 @@ import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, o
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAcLbekbhi7rgJIxw0qYr_yg3cyOiDcbKI",
-  authDomain: "carebridge-7974d.firebaseapp.com",
-  projectId: "carebridge-7974d",
-  storageBucket: "carebridge-7974d.firebasestorage.app",
-  messagingSenderId: "493353782115",
-  appId: "1:493353782115:web:10927eb63c777a5e2be156",
-  measurementId: "G-G7B37TFF08"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyAcLbekbhi7rgJIxw0qYr_yg3cyOiDcbKI",
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "carebridge-7974d.firebaseapp.com",
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "carebridge-7974d",
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "carebridge-7974d.firebasestorage.app",
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "493353782115",
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:493353782115:web:10927eb63c777a5e2be156",
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-G7B37TFF08"
 };
 
 // Initialize Firebase
