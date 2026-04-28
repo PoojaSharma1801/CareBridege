@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import RouteGuard from './RouteGuard';
+import api from './api';
 
 const Dashboard = ({ onLogout }) => {
   const [selectedService, setSelectedService] = useState(null);
@@ -15,6 +16,69 @@ const Dashboard = ({ onLogout }) => {
   const [showActivity, setShowActivity] = useState(true);
   const [showChat, setShowChat] = useState(true);
   const [showClothesDonation, setShowClothesDonation] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Backend API data fetching functions
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/users');
+      setUsers(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+      setError('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/requests');
+      setRequests(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch requests:', err);
+      setError('Failed to load requests');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAnimalReports = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/animals');
+      setAnimalReports(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch animal reports:', err);
+      setError('Failed to load animal reports');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/notifications');
+      setNotifications(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+      setError('Failed to load notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchUsers();
+    fetchRequests();
+    fetchAnimalReports();
+    fetchNotifications();
+  }, []);
   
   const [chatMessages, setChatMessages] = useState([
     { sender: 'ai', text: 'Hello! I\'m your CareBridge assistant. How can I help you today?' }
@@ -307,28 +371,109 @@ const Dashboard = ({ onLogout }) => {
     ));
   };
 
-  // Clothes Donation Handlers
-  const handleClothesRequestSubmit = () => {
+  // Backend API functions for data operations
+  const createServiceRequest = async (requestData) => {
+    try {
+      setLoading(true);
+      const response = await api.post('/api/requests', requestData);
+      setRequests(prev => [response.data, ...prev]);
+      trackUserActivity('Submitted Service Request', requestData.type, 'action');
+      return response.data;
+    } catch (err) {
+      console.error('Failed to create request:', err);
+      setError('Failed to submit request');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateRequestStatus = async (requestId, status) => {
+    try {
+      setLoading(true);
+      const response = await api.put(`/api/requests/${requestId}`, { status });
+      setRequests(prev => prev.map(req => 
+        req.id === requestId ? { ...req, status } : req
+      ));
+      return response.data;
+    } catch (err) {
+      console.error('Failed to update request:', err);
+      setError('Failed to update request');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createAnimalReport = async (reportData) => {
+    try {
+      setLoading(true);
+      const response = await api.post('/api/animals', reportData);
+      setAnimalReports(prev => [response.data, ...prev]);
+      trackUserActivity('Submitted Animal Report', reportData.animal, 'action');
+      return response.data;
+    } catch (err) {
+      console.error('Failed to create animal report:', err);
+      setError('Failed to submit animal report');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateUserStatus = async (userId, status, reason = null) => {
+    try {
+      setLoading(true);
+      const response = await api.put(`/api/users/${userId}`, { status, reason });
+      setUsers(prev => prev.map(user => 
+        user.id === userId ? { ...user, status } : user
+      ));
+      return response.data;
+    } catch (err) {
+      console.error('Failed to update user status:', err);
+      setError('Failed to update user status');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Clothes Donation Handlers (Updated to use backend API)
+  const handleClothesRequestSubmit = async () => {
     if (newClothesRequest.requesterName && newClothesRequest.phone && newClothesRequest.address) {
-      const request = {
-        id: clothesRequests.length + 1,
-        ...newClothesRequest,
-        status: 'pending',
-        requestDate: new Date().toLocaleDateString()
-      };
-      setClothesRequests(prev => [request, ...prev]);
-      setNewClothesRequest({
-        requesterName: '',
-        phone: '',
-        address: '',
-        message: '',
-        clothingType: 'regular',
-        urgency: 'medium',
-        preferredSize: [],
-        gender: 'unisex'
-      });
-      trackUserActivity('Submitted Clothes Request', `Request for ${newClothesRequest.clothingType} clothes`, 'action');
-      alert('Your clothes request has been submitted successfully!');
+      try {
+        const requestData = {
+          type: 'donation',
+          title: 'Clothes Donation Request',
+          requesterName: newClothesRequest.requesterName,
+          phone: newClothesRequest.phone,
+          address: newClothesRequest.address,
+          message: newClothesRequest.message,
+          clothingType: newClothesRequest.clothingType,
+          urgency: newClothesRequest.urgency,
+          preferredSize: newClothesRequest.preferredSize,
+          gender: newClothesRequest.gender,
+          status: 'pending',
+          requestDate: new Date().toLocaleDateString()
+        };
+        
+        await createServiceRequest(requestData);
+        
+        setNewClothesRequest({
+          requesterName: '',
+          phone: '',
+          address: '',
+          message: '',
+          clothingType: 'regular',
+          urgency: 'medium',
+          preferredSize: [],
+          gender: 'unisex'
+        });
+        
+        alert('Your clothes request has been submitted successfully!');
+      } catch (error) {
+        alert('Failed to submit clothes request. Please try again.');
+      }
     }
   };
 
@@ -368,7 +513,7 @@ const Dashboard = ({ onLogout }) => {
     alert(`Requester Details:\n\nName: ${request.requesterName}\nPhone: ${request.phone}\nAddress: ${request.address}\n\nMessage: ${request.message}`);
   };
 
-  const updateRequestStatus = (requestId, newStatus) => {
+  const updateClothesRequestStatus = (requestId, newStatus) => {
     setClothesRequests(prev => prev.map(req => 
       req.id === requestId ? { ...req, status: newStatus } : req
     ));

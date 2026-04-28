@@ -1,113 +1,189 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 import RouteGuard from './RouteGuard';
+import api from './api';
 
 const AdminDashboard = ({ onLogout }) => {
   const [adminSection, setAdminSection] = useState('dashboard');
-  const [users, setUsers] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'user', status: 'active', joinDate: '2024-01-15', lastActive: '2024-03-19', suspicious: false },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'user', status: 'active', joinDate: '2024-02-01', lastActive: '2024-03-18', suspicious: false },
-    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'user', status: 'suspended', joinDate: '2024-01-20', lastActive: '2024-03-10', suspicious: true },
-    { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'admin', status: 'active', joinDate: '2024-02-15', lastActive: '2024-03-19', suspicious: false },
-    { id: 5, name: 'Tom Brown', email: 'tom@example.com', role: 'user', status: 'pending', joinDate: '2024-03-10', lastActive: '2024-03-17', suspicious: false }
-  ]);
-  const [requests, setRequests] = useState([
-    { id: 1, type: 'medical', title: 'Emergency Medical Assistance', user: 'John Doe', date: '2024-03-19', status: 'pending', priority: 'high', description: 'Need immediate medical help for elderly patient' },
-    { id: 2, type: 'donation', title: 'Clothes Donation Request', user: 'Jane Smith', date: '2024-03-18', status: 'approved', priority: 'medium', description: 'Donating 50 winter clothes to shelter' },
-    { id: 3, type: 'adoption', title: 'Elderly Care Application', user: 'Mike Johnson', date: '2024-03-17', status: 'pending', priority: 'high', description: 'Request to adopt elderly community member for care' },
-    { id: 4, type: 'animal', title: 'Animal Rescue Report', user: 'Sarah Wilson', date: '2024-03-16', status: 'investigating', priority: 'medium', description: 'Stray dog needs medical attention' }
-  ]);
-  const [animalReports, setAnimalReports] = useState([
-    { id: 1, animal: 'Dog', location: 'Downtown Park', reportDate: '2024-03-19', status: 'pending', urgency: 'high', description: 'Injured dog found near playground', assignedTo: 'Not assigned' },
-    { id: 2, animal: 'Cat', location: 'Oak Street', reportDate: '2024-03-18', status: 'resolved', urgency: 'medium', description: 'Abandoned cat rescued and taken to shelter', assignedTo: 'Animal Control' },
-    { id: 3, animal: 'Bird', location: 'River Bridge', reportDate: '2024-03-17', status: 'in-progress', urgency: 'low', description: 'Injured pigeon needs assistance', assignedTo: 'Wildlife Rescue' }
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [animalReports, setAnimalReports] = useState([]);
 
-  const handleUserAction = (userId, action) => {
-    console.log(`${action} user ${userId}`);
-    
-    switch(action) {
-      case 'view':
-        alert(`Viewing user ${userId} details`);
-        break;
-      case 'edit':
-        alert(`Editing user ${userId}`);
-        break;
-      case 'suspend':
-        setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, status: 'suspended' } : user
-        ));
-        alert(`User ${userId} has been suspended`);
-        break;
-      case 'block':
-        setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, status: 'blocked', suspicious: true } : user
-        ));
-        alert(`User ${userId} has been blocked`);
-        break;
-      case 'activate':
-        setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, status: 'active', suspicious: false } : user
-        ));
-        alert(`User ${userId} has been activated`);
-        break;
-      case 'promote':
-        setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, role: 'admin' } : user
-        ));
-        alert(`User ${userId} has been promoted to admin`);
-        break;
-      case 'demote':
-        setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, role: 'user' } : user
-        ));
-        alert(`User ${userId} has been demoted to user`);
-        break;
+  // Backend API data fetching functions
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/users');
+      setUsers(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+      setError('Failed to load users');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRequestAction = (requestId, action) => {
-    console.log(`${action} request ${requestId}`);
-    
-    setRequests(prev => prev.map(request => {
-      if (request.id === requestId) {
-        switch(action) {
-          case 'approve':
-            return { ...request, status: 'approved' };
-          case 'reject':
-            return { ...request, status: 'rejected' };
-          case 'investigate':
-            return { ...request, status: 'investigating' };
-          default:
-            return request;
-        }
-      }
-      return request;
-    }));
-    
-    alert(`Request ${requestId} has been ${action}d`);
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/requests');
+      setRequests(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch requests:', err);
+      setError('Failed to load requests');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAnimalAction = (reportId, action) => {
-    console.log(`${action} animal report ${reportId}`);
-    
-    setAnimalReports(prev => prev.map(report => {
-      if (report.id === reportId) {
-        switch(action) {
-          case 'assign':
-            return { ...report, assignedTo: 'Animal Rescue Team', status: 'in-progress' };
-          case 'resolve':
-            return { ...report, status: 'resolved' };
-          case 'escalate':
-            return { ...report, assignedTo: 'Emergency Services', status: 'escalated' };
-          default:
-            return report;
-        }
+  const fetchAnimalReports = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/api/animals');
+      setAnimalReports(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch animal reports:', err);
+      setError('Failed to load animal reports');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchUsers();
+    fetchRequests();
+    fetchAnimalReports();
+  }, []);
+
+  // Backend API functions for admin operations
+  const updateUserStatus = async (userId, status, reason = null) => {
+    try {
+      setLoading(true);
+      const response = await api.put(`/api/users/${userId}`, { status, reason });
+      setUsers(prev => prev.map(user => 
+        user.id === userId ? { ...user, status } : user
+      ));
+      return response.data;
+    } catch (err) {
+      console.error('Failed to update user status:', err);
+      setError('Failed to update user status');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateRequestStatus = async (requestId, status) => {
+    try {
+      setLoading(true);
+      const response = await api.put(`/api/requests/${requestId}`, { status });
+      setRequests(prev => prev.map(req => 
+        req.id === requestId ? { ...req, status } : req
+      ));
+      return response.data;
+    } catch (err) {
+      console.error('Failed to update request:', err);
+      setError('Failed to update request');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateAnimalReportStatus = async (reportId, status) => {
+    try {
+      setLoading(true);
+      const response = await api.put(`/api/animals/${reportId}`, { status });
+      setAnimalReports(prev => prev.map(report => 
+        report.id === reportId ? { ...report, status } : report
+      ));
+      return response.data;
+    } catch (err) {
+      console.error('Failed to update animal report:', err);
+      setError('Failed to update animal report');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUserAction = async (userId, action) => {
+    try {
+      switch(action) {
+        case 'view':
+          const user = users.find(u => u.id === userId);
+          alert(`User Details:\n\nName: ${user.name}\nEmail: ${user.email}\nRole: ${user.role}\nStatus: ${user.status}\nJoin Date: ${user.joinDate}\nLast Active: ${user.lastActive}`);
+          break;
+        case 'suspend':
+          await updateUserStatus(userId, 'suspended', 'Administrative suspension');
+          alert(`User ${userId} has been suspended`);
+          break;
+        case 'activate':
+          await updateUserStatus(userId, 'active');
+          alert(`User ${userId} has been activated`);
+          break;
+        case 'delete':
+          if (confirm('Are you sure you want to delete this user?')) {
+            await api.delete(`/api/users/${userId}`);
+            setUsers(prev => prev.filter(user => user.id !== userId));
+            alert(`User ${userId} has been deleted`);
+          }
+          break;
+        default:
+          alert(`${action} action for user ${userId}`);
       }
-      return report;
-    }));
-    
-    alert(`Animal report ${reportId} has been ${action}d`);
+    } catch (error) {
+      alert(`Failed to ${action} user: ${error.message}`);
+    }
+  };
+
+  const handleRequestAction = async (requestId, action) => {
+    try {
+      switch(action) {
+        case 'approve':
+          await updateRequestStatus(requestId, 'approved');
+          alert(`Request ${requestId} has been approved`);
+          break;
+        case 'reject':
+          await updateRequestStatus(requestId, 'rejected');
+          alert(`Request ${requestId} has been rejected`);
+          break;
+        case 'investigate':
+          await updateRequestStatus(requestId, 'investigating');
+          alert(`Request ${requestId} is now under investigation`);
+          break;
+        default:
+          alert(`${action} action for request ${requestId}`);
+      }
+    } catch (error) {
+      alert(`Failed to ${action} request: ${error.message}`);
+    }
+  };
+
+  const handleAnimalAction = async (reportId, action) => {
+    try {
+      switch(action) {
+        case 'assign':
+          await updateAnimalReportStatus(reportId, 'in-progress');
+          alert(`Animal report ${reportId} has been assigned to rescue team`);
+          break;
+        case 'resolve':
+          await updateAnimalReportStatus(reportId, 'resolved');
+          alert(`Animal report ${reportId} has been resolved`);
+          break;
+        case 'investigate':
+          await updateAnimalReportStatus(reportId, 'investigating');
+          alert(`Animal report ${reportId} is now under investigation`);
+          break;
+        default:
+          alert(`${action} action for animal report ${reportId}`);
+      }
+    } catch (error) {
+      alert(`Failed to ${action} animal report: ${error.message}`);
+    }
   };
 
   const renderAdminContent = () => {
